@@ -162,18 +162,61 @@
   <div class="modal fade" id="newBookModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">新书录入</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-header">
+          <h5 class="modal-title">新书录入</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
         <div class="modal-body">
-          <div class="mb-2"><label>ISBN</label><input class="form-control" v-model="newBook.isbn"></div>
-          <div class="mb-2"><label>书名</label><input class="form-control" v-model="newBook.title"></div>
-          <div class="row">
-            <div class="col-6 mb-2"><label>售价</label><input type="number" class="form-control" v-model.number="newBook.price"></div>
-            <div class="col-6 mb-2"><label>初始库存</label><input type="number" class="form-control" v-model.number="newBook.stockQty"></div>
-          </div>
-          <div class="mb-2"><label>出版社</label><input class="form-control" v-model="newBook.publisher"></div>
+          <form>
+            <div class="mb-3">
+              <label class="form-label">ISBN <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" v-model="newBook.isbn" placeholder="978...">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">书名 <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" v-model="newBook.title">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">作者</label>
+                <input type="text" class="form-control" v-model="newBook.authorName" placeholder="例如: 余华">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">出版社</label>
+                <input type="text" class="form-control" v-model="newBook.publisher">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">销售价 (Price)</label>
+                <div class="input-group">
+                  <span class="input-group-text">¥</span>
+                  <input type="number" class="form-control" v-model.number="newBook.price">
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">供应商</label>
+                <select class="form-select" v-model="newBook.supplierId">
+                  <option disabled value="">请选择...</option>
+                  <option v-for="s in suppliers" :value="s.supplierId">{{ s.name }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">初始库存</label>
+                <input type="number" class="form-control" v-model.number="newBook.stockQty">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">最低警戒线</label>
+                <input type="number" class="form-control" v-model.number="newBook.minStock">
+              </div>
+            </div>
+          </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" @click="saveNewBook">保存并入库</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" @click="saveNewBook">保存并入库</button>
         </div>
       </div>
     </div>
@@ -195,17 +238,28 @@
         currentTab: 'inventory',
         searchQuery: '',
         newBookModal: null,
-        // 纯净数据源
+
         books: [],
         shortages: [],
         orders: [],
+        suppliers: [], // 存放供应商列表
         stats: { dailySales: 0, dailyProfit: 0 },
-        newBook: { isbn: '', title: '', price: 0, stockQty: 100, minStock: 10, publisher: '' }
+
+        // 表单数据 (注意对应 Book.java 的字段)
+        newBook: {
+          isbn: '', title: '',
+          authorName: '', publisher: '',
+          price: 0,
+          supplierId: '',
+          stockQty: 100, minStock: 10
+        }
       }
     },
     mounted() {
       this.newBookModal = new bootstrap.Modal(document.getElementById('newBookModal'));
-      this.fetchAllData(); // 初始化加载所有数据
+      this.fetchAllData();
+      // 加载供应商下拉框数据
+      this.fetchSuppliers();
     },
     methods: {
       fetchAllData() {
@@ -215,34 +269,62 @@
         axios.get(`${API_BASE}/admin/stats`).then(res => this.stats = res.data);
       },
 
+      // 获取供应商列表
+      fetchSuppliers() {
+        axios.get(`${API_BASE}/suppliers`).then(res => {
+          this.suppliers = res.data;
+          // 如果列表有数据，默认选中第一个，防止空选
+          if(this.suppliers.length > 0) {
+            this.newBook.supplierId = this.suppliers[0].supplierId;
+          }
+        });
+      },
+
       openNewBookModal() {
-        this.newBook = { isbn: '', title: '', price: 0, stockQty: 100, minStock: 10, publisher: '' };
+        // 重置表单
+        this.newBook = {
+          isbn: '', title: '', authorName: '', publisher: '',
+          price: 0,
+          supplierId: this.suppliers.length > 0 ? this.suppliers[0].supplierId : '',
+          stockQty: 100, minStock: 10
+        };
         this.newBookModal.show();
       },
+
       saveNewBook() {
+        if(!this.newBook.isbn || !this.newBook.title) {
+          alert("ISBN和书名不能为空！");
+          return;
+        }
         axios.post(`${API_BASE}/admin/books`, this.newBook).then(res => {
           if(res.data.success) {
             alert("录入成功");
             this.newBookModal.hide();
-            this.fetchAllData(); // 核心：录入后刷新列表
+            this.fetchAllData();
           } else {
             alert("失败: " + res.data.message);
           }
         });
       },
+
       handleRestock(item) {
-        // 根据后端 Mapper 接收的参数
-        axios.post(`${API_BASE}/shortages/restock`, { isbn: item.ISBN, qty: item.Need_Qty }).then(res => {
-          alert(res.data.message);
-          this.fetchAllData();
-        });
+        const isbn = item.ISBN || item.isbn;
+        const qty = item.Need_Qty || item.needQty || item.quantity;
+        if(confirm(`确认采购？`)) {
+          axios.post(`${API_BASE}/shortages/restock`, { isbn: isbn, qty: qty }).then(res => {
+            alert(res.data.message);
+            this.fetchAllData();
+          });
+        }
       },
+
       shipOrder(order) {
         axios.post(`${API_BASE}/orders/ship`, { id: order.id }).then(res => {
           alert("发货成功");
           this.fetchAllData();
         });
       },
+
       getStatusClass(s) {
         return s === 'Paid' ? 'bg-success' : (s === 'Shipped' ? 'bg-primary' : 'bg-secondary');
       }

@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.mapper.BookMapper;
 import com.example.pojo.Book;
 import com.example.pojo.OrderRequest;
+import com.example.service.BookService;
 import com.example.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,26 +14,25 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // 允许前端跨域
+@CrossOrigin(origins = "*")
 public class BookController {
 
     @Autowired
     private BookMapper bookMapper;
     @Autowired
+    private BookService bookService;
+    @Autowired
     private OrderService orderService;
 
-    // ================= 前台用户接口 (对应 index0.html) =================
+    // ================= 前台用户接口 =================
 
     // 1. 获取图书列表
     @GetMapping("/books")
     public List<Book> getAllBooks(@RequestParam(required = false) String keyword) {
-        if (keyword != null && !keyword.isEmpty()) {
-            return bookMapper.findByKeyword(keyword);
-        }
-        return bookMapper.findAll();
+        return bookService.getBooks(keyword);
     }
 
-    // 2. 提交订单 (调用存储过程)
+    // 2. 提交订单
     @PostMapping("/order/submit")
     public Map<String, Object> submitOrder(@RequestBody OrderRequest request) {
         String result = orderService.processOrder(
@@ -46,35 +46,28 @@ public class BookController {
         return response;
     }
 
-    // 3. 历史订单
+    // 3. 历史订单 (🔴 修复点：调用 Service 方法，稍后我们在 Service 里补上)
     @GetMapping("/orders/history")
     public List<Map<String, Object>> getHistory(@RequestParam Integer customerId) {
-        // 返回的数据字段名会自动映射为小写 (例如 orderid, total_amount)
-        // 前端 Vue 需要根据实际返回的 JSON 调整大小写
-        return orderService.getHistory(customerId);
+        return orderService.getCustomerHistory(customerId);
     }
 
-    // ================= 后台管理员接口 (对应 admin_enhance0.html) =================
+    // ================= 后台管理员接口 =================
 
-    // 4. 管理员图书列表 (带进价)
+    // 4. 管理员图书列表
     @GetMapping("/admin/books")
     public List<Map<String, Object>> getAdminBooks() {
         return bookMapper.findBooksForAdmin();
     }
 
-    // 5. 新书录入
+    // 5. 新书录入 (🔴 核心修复：直接调 Service，解决了参数不匹配报错)
     @PostMapping("/admin/books")
     public Map<String, Object> addBook(@RequestBody Book book) {
         try {
-            // 1. 插入图书基本信息
-            bookMapper.insertBook(book);
-
-            // 2. 【新增关键代码】插入供应商关联
-            // 如果前端没传 supplierId，默认关联到 ID=1 的供应商
-            bookMapper.insertBookSupplier(book.getIsbn());
-
+            bookService.addBook(book);
             return Map.of("success", true, "message", "录入成功");
         } catch (Exception e) {
+            e.printStackTrace();
             return Map.of("success", false, "message", "录入失败: " + e.getMessage());
         }
     }
@@ -85,13 +78,13 @@ public class BookController {
         return bookMapper.findShortages();
     }
 
-    // 7. 补货 (Restock)
+    // 7. 补货
     @PostMapping("/shortages/restock")
     public Map<String, Object> restock(@RequestBody Map<String, Object> payload) {
         String isbn = (String) payload.get("isbn");
         Integer qty = (Integer) payload.get("qty");
         bookMapper.restockBook(isbn, qty);
-        return Map.of("success", true, "message", "补货成功，触发器已自动处理缺货记录");
+        return Map.of("success", true, "message", "补货成功");
     }
 
     // 8. 订单管理与发货
@@ -102,21 +95,14 @@ public class BookController {
 
     @PostMapping("/orders/ship")
     public Map<String, Object> shipOrder(@RequestBody Map<String, Object> payload) {
-        Integer orderId = (Integer) payload.get("id"); // 注意前端传的是 id 还是 orderId
+        Integer orderId = (Integer) payload.get("id");
         orderService.shipOrder(orderId);
         return Map.of("success", true, "message", "发货成功");
     }
 
-    // 9. 财务仪表盘统计
+    // 9. 财务仪表盘
     @GetMapping("/admin/stats")
     public Map<String, Object> getStats() {
-        Double totalRev = bookMapper.getTotalRevenue();
-        if (totalRev == null) totalRev = 0.0;
-
-        // 简单模拟利润 = 营收 * 0.4
-        return Map.of(
-                "dailySales", totalRev,
-                "dailyProfit", totalRev * 0.4
-        );
+        return bookService.getDashboardStats();
     }
 }

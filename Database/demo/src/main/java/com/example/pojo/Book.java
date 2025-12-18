@@ -15,4 +15,6 @@ public class Book {
     private Double price;
     private Integer stockQty; // 对应数据库 Stock_Qty
     private Integer minStock; // 对应数据库 Min_Stock
+    private Integer supplierId;   // 选中的供应商ID
+    private String authorName;    // 输入的作者名
 }

@@ -75,6 +75,10 @@ public class OrderService {
     @Autowired
     private OrderMapper orderMapper;
 
+    public List<Map<String, Object>> getCustomerHistory(Integer customerId) {
+        return orderMapper.findHistory(customerId);
+    }
+
     /**
      * 核心下单逻辑 (用户端)
      * 1. 插入主表
