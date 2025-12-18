@@ -87,4 +87,12 @@ public interface OrderMapper {
             "JOIN T_CUSTOMERS c ON o.CustomerID = c.CustomerID " +
             "ORDER BY o.Order_Date DESC")
     List<Map<String, Object>> findAllOrders();
+
+    // 【新增】删除订单明细 (先执行这个)
+    @Delete("DELETE FROM T_ORDER_DETAILS WHERE OrderID = #{orderId}")
+    void deleteOrderDetails(Integer orderId);
+
+    // 【新增】删除订单主表 (后执行这个)
+    @Delete("DELETE FROM T_ORDERS WHERE OrderID = #{orderId}")
+    void deleteOrder(Integer orderId);
 }

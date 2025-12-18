@@ -1,63 +1,3 @@
-/*
-package com.example.service;
-
-import com.example.mapper.OrderMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-@Service
-public class OrderService {
-
-    @Autowired
-    private OrderMapper orderMapper;
-
-    @Transactional
-    public String processOrder(Integer customerId, String isbn, Integer quantity) {
-        // 1. 插入主表 (使用 Map 传参以获取回填的 OrderID)
-        Map<String, Object> orderParams = new HashMap<>();
-        orderParams.put("customerId", customerId);
-        orderMapper.createOrder(orderParams);
-
-        Integer newOrderId = (Integer) orderParams.get("orderId"); // 获取 MyBatis 回填的 ID
-
-        // 2. 插入明细
-        orderMapper.createOrderDetail(newOrderId, isbn, quantity);
-
-        // 3. 调用存储过程
-        // 准备参数 Map，包含 IN 和 OUT
-        Map<String, Object> procParams = new HashMap<>();
-        procParams.put("orderId", newOrderId);
-        procParams.put("result", null); // 占位符，等待存储过程写回
-
-        orderMapper.callPaymentProcedure(procParams);
-
-        // 4. 获取存储过程的返回结果
-        return (String) procParams.get("result");
-    }
-
-    public List<Map<String, Object>> getHistory(Integer customerId) {
-        return orderMapper.findHistory(customerId);
-    }
-
-    public void shipOrder(Integer orderId) {
-        orderMapper.shipOrder(orderId);
-    }
-
-    */
-/*
-     * 管理员获取所有订单
-     * 逻辑：调用 Mapper 查询所有订单列表
-     *//*
-
-    public List<Map<String, Object>> getAllOrders() {
-        return orderMapper.findAllOrders();
-    }
-}*/
 package com.example.service;
 
 import com.example.mapper.OrderMapper;
@@ -140,5 +80,37 @@ public class OrderService {
      */
     public List<Map<String, Object>> getAllOrders() {
         return orderMapper.findAllOrders();
+    }
+
+    /**
+     * 【新增】重新支付 (Retry Payment)
+     * 逻辑：直接再次调用 SP_Process_Order_Payment 存储过程
+     * 因为存储过程内部会再次检查余额、扣库存。如果这次余额够了，就会变 Success。
+     */
+    @Transactional
+    public String retryOrder(Integer orderId) {
+        try {
+            Map<String, Object> procParams = new HashMap<>();
+            procParams.put("orderId", orderId);
+            procParams.put("result", null);
+
+            // 复用 Mapper 里已有的调用存储过程方法
+            orderMapper.callPaymentProcedure(procParams);
+
+            return (String) procParams.get("result");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("重试支付异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 【新增】删除/取消订单
+     * 逻辑：先删明细，再删主表
+     */
+    @Transactional
+    public void deleteOrder(Integer orderId) {
+        orderMapper.deleteOrderDetails(orderId);
+        orderMapper.deleteOrder(orderId);
     }
 }

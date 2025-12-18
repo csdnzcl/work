@@ -120,4 +120,27 @@ public class BookController {
             return Map.of("success", false, "message", "操作失败: " + e.getMessage());
         }
     }
+
+    // 【新增】重新支付接口
+    @PostMapping("/order/repay")
+    public Map<String, Object> repayOrder(@RequestBody Map<String, Object> payload) {
+        Integer orderId = (Integer) payload.get("orderId");
+        String result = orderService.retryOrder(orderId);
+
+        // 存储过程返回 Success... 或 Fail...
+        boolean success = result.startsWith("Success");
+        return Map.of("success", success, "message", result);
+    }
+
+    // 【新增】删除订单接口
+    @PostMapping("/order/delete")
+    public Map<String, Object> deleteOrder(@RequestBody Map<String, Object> payload) {
+        try {
+            Integer orderId = (Integer) payload.get("orderId");
+            orderService.deleteOrder(orderId);
+            return Map.of("success", true, "message", "订单已删除");
+        } catch (Exception e) {
+            return Map.of("success", false, "message", "删除失败: " + e.getMessage());
+        }
+    }
 }
