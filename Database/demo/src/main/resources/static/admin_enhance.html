@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>网上书店 - 后台管理系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .sidebar { background: #2c3e50; min-height: 100vh; color: #ecf0f1; }
+    .nav-link { color: #bdc3c7; cursor: pointer; }
+    .nav-link.active { background: #3498db; color: #fff; border-left: 4px solid #fff; }
+    .text-price { color: #e74c3c; font-weight: bold; }
+    .text-profit { color: #27ae60; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div id="adminApp" class="d-flex">
+  <div class="sidebar d-flex flex-column flex-shrink-0 p-3" style="width: 250px;">
+    <h4 class="text-center mb-4"><i class="fas fa-database me-2"></i>后台管理</h4>
+    <div class="user-panel mb-3 text-center pb-3 border-bottom border-secondary">
+      <div class="small">Administrator</div>
+      <div class="badge bg-danger">Full Access</div>
+    </div>
+    <ul class="nav nav-pills flex-column mb-auto">
+      <li class="nav-item mb-2"><a class="nav-link" :class="{active: currentTab === 'dashboard'}" @click="currentTab = 'dashboard'">财务概览</a></li>
+      <li class="nav-item mb-2"><a class="nav-link" :class="{active: currentTab === 'inventory'}" @click="currentTab = 'inventory'">库存与成本</a></li>
+      <li class="nav-item mb-2">
+        <a class="nav-link" :class="{active: currentTab === 'procurement'}" @click="currentTab = 'procurement'">
+          采购监控 <span v-if="shortages.length" class="badge bg-warning text-dark float-end">{{shortages.length}}</span>
+        </a>
+      </li>
+      <li class="nav-item"><a class="nav-link" :class="{active: currentTab === 'orders'}" @click="currentTab = 'orders'">订单发货</a></li>
+    </ul>
+  </div>
+
+  <div class="flex-grow-1 bg-light p-4 overflow-auto" style="height: 100vh;">
+
+    <div v-if="currentTab === 'dashboard'">
+      <h3 class="mb-4">财务经营数据</h3>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card p-3 border-0 shadow-sm">
+            <div class="text-muted small">总销售额 (Revenue)</div>
+            <div class="fs-4 fw-bold text-primary">¥{{ stats.dailySales.toFixed(2) }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 border-0 shadow-sm">
+            <div class="text-muted small">估算毛利 (Profit)</div>
+            <div class="fs-4 fw-bold text-success">¥{{ stats.dailyProfit.toFixed(2) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="currentTab === 'inventory'">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>库存与成本 (Admin View)</h3>
+        <button class="btn btn-primary" @click="openNewBookModal"><i class="fas fa-plus"></i> 新书录入</button>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+          <tr>
+            <th>书名/ISBN</th>
+            <th>供应商</th>
+            <th>进价 (Cost)</th>
+            <th>售价 (Price)</th>
+            <th>库存</th>
+            <th>状态</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="book in books" :key="book.isbn">
+            <td>
+              <strong>{{ book.title }}</strong><br>
+              <small class="text-muted">{{ book.isbn }}</small>
+            </td>
+            <td>{{ book.supplier || '默认供应商' }}</td>
+            <td class="text-price">¥{{ book.costPrice ? book.costPrice.toFixed(2) : '0.00' }}</td>
+            <td>¥{{ book.price.toFixed(2) }}</td>
+            <td>
+                                <span :class="book.stockQty < book.minStock ? 'text-danger fw-bold' : ''">
+                                    {{ book.stockQty }} / {{ book.minStock }}
+                                </span>
+            </td>
+            <td>
+              <span v-if="book.stockQty < book.minStock" class="badge bg-danger">缺货</span>
+              <span v-else class="badge bg-success">充足</span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div v-if="currentTab === 'procurement'">
+      <h3 class="mb-4">智能采购中心</h3>
+      <div class="alert alert-info">以下数据来自视图 <strong>V_PURCHASE_GUIDE</strong> (自动过滤未处理记录)</div>
+      <table class="table table-striped bg-white shadow-sm">
+        <thead>
+        <tr>
+          <th>记录ID</th>
+          <th>书名</th>
+          <th>缺口数量</th>
+          <th>供应商信息</th>
+          <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="s in shortages" :key="s.RecordID">
+          <td>#{{ s.RecordID }}</td>
+          <td>{{ s.Title }}<br><small>{{ s.ISBN }}</small></td>
+          <td class="fw-bold fs-5 text-danger">{{ s.Need_Qty }}</td>
+          <td>{{ s.Supplier_Info }}</td>
+          <td>
+            <button class="btn btn-success btn-sm" @click="handleRestock(s)">
+              <i class="fas fa-check"></i> 确认进货
+            </button>
+          </td>
+        </tr>
+        <tr v-if="shortages.length === 0"><td colspan="5" class="text-center py-4">无缺货记录</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-if="currentTab === 'orders'">
+      <div class="d-flex justify-content-between mb-4">
+        <h3>订单发货管理</h3>
+        <button class="btn btn-outline-secondary btn-sm" @click="fetchAllData">刷新</button>
+      </div>
+      <table class="table table-hover bg-white shadow-sm">
+        <thead><tr><th>订单号</th><th>客户</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody>
+        <tr v-for="order in orders" :key="order.id">
+          <td>#{{ order.id }}</td>
+          <td>{{ order.customerName }}<br><small>{{ new Date(order.date).toLocaleString() }}</small></td>
+          <td class="fw-bold">¥{{ order.amount.toFixed(2) }}</td>
+          <td><span class="badge" :class="getStatusClass(order.status)">{{ order.status }}</span></td>
+          <td>
+            <button v-if="order.status === 'Paid'" class="btn btn-primary btn-sm" @click="shipOrder(order)">
+              <i class="fas fa-shipping-fast"></i> 发货
+            </button>
+
+            <button v-else-if="order.status === 'Shipped'" class="btn btn-success btn-sm" disabled>
+              <i class="fas fa-check"></i> 已发货
+            </button>
+
+            <button v-else class="btn btn-secondary btn-sm" disabled>
+              <i class="fas fa-clock"></i> 等待付款
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="modal fade" id="newBookModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">新书录入</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="mb-2"><label>ISBN</label><input class="form-control" v-model="newBook.isbn"></div>
+          <div class="mb-2"><label>书名</label><input class="form-control" v-model="newBook.title"></div>
+          <div class="row">
+            <div class="col-6 mb-2"><label>售价</label><input type="number" class="form-control" v-model.number="newBook.price"></div>
+            <div class="col-6 mb-2"><label>初始库存</label><input type="number" class="form-control" v-model.number="newBook.stockQty"></div>
+          </div>
+          <div class="mb-2"><label>出版社</label><input class="form-control" v-model="newBook.publisher"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" @click="saveNewBook">保存并入库</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+  const { createApp } = Vue;
+  const API_BASE = 'http://localhost:8080/api';
+
+  createApp({
+    data() {
+      return {
+        currentTab: 'inventory',
+        searchQuery: '',
+        newBookModal: null,
+        // 纯净数据源
+        books: [],
+        shortages: [],
+        orders: [],
+        stats: { dailySales: 0, dailyProfit: 0 },
+        newBook: { isbn: '', title: '', price: 0, stockQty: 100, minStock: 10, publisher: '' }
+      }
+    },
+    mounted() {
+      this.newBookModal = new bootstrap.Modal(document.getElementById('newBookModal'));
+      this.fetchAllData(); // 初始化加载所有数据
+    },
+    methods: {
+      fetchAllData() {
+        axios.get(`${API_BASE}/admin/books`).then(res => this.books = res.data);
+        axios.get(`${API_BASE}/shortages`).then(res => this.shortages = res.data);
+        axios.get(`${API_BASE}/admin/orders`).then(res => this.orders = res.data);
+        axios.get(`${API_BASE}/admin/stats`).then(res => this.stats = res.data);
+      },
+
+      openNewBookModal() {
+        this.newBook = { isbn: '', title: '', price: 0, stockQty: 100, minStock: 10, publisher: '' };
+        this.newBookModal.show();
+      },
+      saveNewBook() {
+        axios.post(`${API_BASE}/admin/books`, this.newBook).then(res => {
+          if(res.data.success) {
+            alert("录入成功");
+            this.newBookModal.hide();
+            this.fetchAllData(); // 核心：录入后刷新列表
+          } else {
+            alert("失败: " + res.data.message);
+          }
+        });
+      },
+      handleRestock(item) {
+        // 根据后端 Mapper 接收的参数
+        axios.post(`${API_BASE}/shortages/restock`, { isbn: item.ISBN, qty: item.Need_Qty }).then(res => {
+          alert(res.data.message);
+          this.fetchAllData();
+        });
+      },
+      shipOrder(order) {
+        axios.post(`${API_BASE}/orders/ship`, { id: order.id }).then(res => {
+          alert("发货成功");
+          this.fetchAllData();
+        });
+      },
+      getStatusClass(s) {
+        return s === 'Paid' ? 'bg-success' : (s === 'Shipped' ? 'bg-primary' : 'bg-secondary');
+      }
+    }
+  }).mount('#adminApp');
+</script>
+</body>
+</html>

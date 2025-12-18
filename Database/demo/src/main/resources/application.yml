@@ -1,0 +1,16 @@
+# 数据库连接配置
+spring:
+  datasource:
+      url: jdbc:mysql://localhost:3306/OnlineBookStore?useSSL=false&serverTimezone=UTC
+      username: root
+      password: zcl201314
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+
+  # 开启 MyBatis 下划线转驼峰 (例如 stock_qty -> stockQty)
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper:
+    locations: classpath:mapper/*.xml
