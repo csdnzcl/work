@@ -115,8 +115,37 @@
             <input type="password" class="form-control" v-model="loginForm.password" placeholder="默认: 123456">
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-primary w-100" @click="handleLogin">登录</button>
+        <div class="modal-footer d-flex justify-content-between">
+          <button class="btn btn-link" @click="switchToRegister">没有账号？去注册</button>
+          <button class="btn btn-primary" @click="handleLogin">登录</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">新用户注册</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>用户名 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" v-model="regForm.name" placeholder="请输入用户名">
+          </div>
+          <div class="mb-3">
+            <label>密码 <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" v-model="regForm.password" placeholder="设置密码">
+          </div>
+          <div class="mb-3">
+            <label>收货地址 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" v-model="regForm.address" placeholder="例如: 某大学宿舍A栋">
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <button class="btn btn-link" @click="switchToLogin">已有账号？去登录</button>
+          <button class="btn btn-success" @click="handleRegister">立即注册</button>
         </div>
       </div>
     </div>
@@ -216,7 +245,10 @@
         orderQuantity: 1,
         loginModal: null,
         cartModal: null,
-        orderHistoryModal: null
+        orderHistoryModal: null,
+
+        regForm: { name: '', password: '', address: '' },//注册表单
+        registerModal: null // 注册弹窗实例
       }
     },
     mounted() {
@@ -228,6 +260,9 @@
       this.checkLoginStatus();
 
       this.fetchBooks();
+
+      // 新增：初始化注册弹窗
+      this.registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
     },
     methods: {
       // 新增：检查登录状态
@@ -240,6 +275,38 @@
                     console.log("自动登录成功");
                   } else {
                     console.log("用户未登录");
+                  }
+                });
+      },
+      // 1. 切换弹窗：去注册
+      switchToRegister() {
+        this.loginModal.hide();
+        this.registerModal.show();
+      },
+
+      // 2. 切换弹窗：去登录
+      switchToLogin() {
+        this.registerModal.hide();
+        this.loginModal.show();
+      },
+
+      // 3. 提交注册
+      handleRegister() {
+        if(!this.regForm.name || !this.regForm.password || !this.regForm.address) {
+          alert("请填写完整信息！");
+          return;
+        }
+
+        axios.post(`${API_BASE}/register`, this.regForm)
+                .then(res => {
+                  if (res.data.success) {
+                    alert("注册成功！请使用新账号登录。");
+                    // 注册成功后，自动跳回登录页，并填好用户名
+                    this.loginForm.username = this.regForm.name;
+                    this.loginForm.password = '';
+                    this.switchToLogin();
+                  } else {
+                    alert(res.data.message);
                   }
                 });
       },

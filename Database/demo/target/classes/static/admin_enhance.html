@@ -57,13 +57,23 @@
     <div v-if="currentTab === 'inventory'">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h3>库存与成本 (Admin View)</h3>
-        <button class="btn btn-primary" @click="openNewBookModal"><i class="fas fa-plus"></i> 新书录入</button>
+        <div>
+          <button class="btn btn-danger me-2" @click="batchClearStock" :disabled="selectedBooks.length === 0">
+            <i class="fas fa-trash-alt"></i> 清空选中库存
+          </button>
+          <button class="btn btn-primary" @click="openNewBookModal">
+            <i class="fas fa-plus"></i> 新书录入
+          </button>
+        </div>
       </div>
 
       <div class="card shadow-sm border-0">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
           <tr>
+            <th style="width: 40px;">
+              <input type="checkbox" class="form-check-input" v-model="selectAll" @change="toggleSelectAll">
+            </th>
             <th>书名/ISBN</th>
             <th>供应商</th>
             <th>进价 (Cost)</th>
@@ -74,6 +84,9 @@
           </thead>
           <tbody>
           <tr v-for="book in books" :key="book.isbn">
+            <td>
+              <input type="checkbox" class="form-check-input" :value="book.isbn" v-model="selectedBooks">
+            </td>
             <td>
               <strong>{{ book.title }}</strong><br>
               <small class="text-muted">{{ book.isbn }}</small>
@@ -252,7 +265,10 @@
           price: 0,
           supplierId: '',
           stockQty: 100, minStock: 10
-        }
+        },
+
+        selectedBooks: [], // 存放选中的 ISBN
+        selectAll: false,  // 全选状态
       }
     },
     mounted() {
@@ -327,6 +343,30 @@
 
       getStatusClass(s) {
         return s === 'Paid' ? 'bg-success' : (s === 'Shipped' ? 'bg-primary' : 'bg-secondary');
+      },
+      toggleSelectAll() {
+        if (this.selectAll) {
+          this.selectedBooks = this.books.map(b => b.isbn);
+        } else {
+          this.selectedBooks = [];
+        }
+      },
+
+      // 2. 批量清空库存
+      batchClearStock() {
+        if (confirm(`确定要将这 ${this.selectedBooks.length} 本书的库存全部清零吗？\n注意：这将触发缺货报警！`)) {
+          axios.post(`${API_BASE}/admin/books/clear`, { isbns: this.selectedBooks })
+                  .then(res => {
+                    if (res.data.success) {
+                      alert("操作成功！库存已清零。");
+                      this.selectedBooks = []; // 清空选中
+                      this.selectAll = false;
+                      this.fetchAllData(); // 刷新列表
+                    } else {
+                      alert("失败: " + res.data.message);
+                    }
+                  });
+        }
       }
     }
   }).mount('#adminApp');

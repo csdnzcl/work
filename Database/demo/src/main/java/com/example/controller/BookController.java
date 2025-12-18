@@ -105,4 +105,19 @@ public class BookController {
     public Map<String, Object> getStats() {
         return bookService.getDashboardStats();
     }
+
+    // 10. 清空库存接口
+    @PostMapping("/admin/books/clear")
+    public Map<String, Object> clearStock(@RequestBody Map<String, List<String>> payload) {
+        List<String> isbns = payload.get("isbns"); // 接收 ISBN 列表
+        try {
+            for (String isbn : isbns) {
+                // 直接调 Mapper (简单逻辑无需 Service)
+                bookMapper.clearStock(isbn);
+            }
+            return Map.of("success", true, "message", "库存已清零");
+        } catch (Exception e) {
+            return Map.of("success", false, "message", "操作失败: " + e.getMessage());
+        }
+    }
 }

@@ -64,4 +64,9 @@ public interface BookMapper {
     // 关联书和作者
     @Insert("INSERT INTO T_BOOK_AUTHORS (ISBN, AuthorID, Author_Rank) VALUES (#{isbn}, #{authorId}, 1)")
     void insertBookAuthor(@Param("isbn") String isbn, @Param("authorId") Integer authorId);
+
+    // 9. 清空库存 (将 Stock_Qty 置为 0)
+    // 支持批量操作，这里为了简单演示，先做单个清空，前端循环调用即可
+    @Update("UPDATE T_BOOKS SET Stock_Qty = 0 WHERE ISBN = #{isbn}")
+    void clearStock(String isbn);
 }

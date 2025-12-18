@@ -2,6 +2,7 @@ package com.example.controller;
 
 import com.example.mapper.CustomerMapper;
 import com.example.mapper.SupplierMapper;
+import com.example.mapper.UserMapper;
 import com.example.pojo.Customer;
 import com.example.pojo.Supplier;
 import jakarta.servlet.http.Cookie;
@@ -22,8 +23,8 @@ public class UserController {
     private CustomerMapper customerMapper;
     @Autowired
     private SupplierMapper supplierMapper;
-/*    @Autowired
-    private UserMapper userMapper;*/
+    @Autowired
+    private UserMapper userMapper;
 
     // 1. 用户登录 (修改：增加 HttpServletResponse 参数用于设置 Cookie)
     @PostMapping("/login")
@@ -77,12 +78,23 @@ public class UserController {
         return customerMapper.findById(id);
     }
 
-    // 3. 用户注册
     @PostMapping("/register")
     public Map<String, Object> register(@RequestBody Customer customer) {
+        // 1. 简单校验
+        if (customer.getName() == null || customer.getPassword() == null) {
+            return Map.of("success", false, "message", "用户名或密码不能为空");
+        }
+
+        // 2. 检查用户名是否重复
+        int count = userMapper.countByUsername(customer.getName());
+        if (count > 0) {
+            return Map.of("success", false, "message", "该用户名已被注册！");
+        }
+
+        // 3. 执行插入
         try {
-            customerMapper.register(customer);
-            return Map.of("success", true, "message", "注册成功");
+            userMapper.register(customer);
+            return Map.of("success", true, "message", "注册成功，请登录！");
         } catch (Exception e) {
             return Map.of("success", false, "message", "注册失败: " + e.getMessage());
         }
