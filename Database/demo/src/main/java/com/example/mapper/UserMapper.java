@@ -1,10 +1,9 @@
 package com.example.mapper;
 
 import com.example.pojo.Customer;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
+
+import java.math.BigDecimal;
 
 @Mapper
 public interface UserMapper {
@@ -26,4 +25,8 @@ public interface UserMapper {
     // 4. 【新增】检查用户名是否已存在 (防止重复注册)
     @Select("SELECT COUNT(*) FROM T_CUSTOMERS WHERE Name = #{username}")
     int countByUsername(String username);
+
+    // 【新增】充值功能：增加余额
+    @Update("UPDATE T_CUSTOMERS SET Balance = Balance + #{amount} WHERE CustomerID = #{customerId}")
+    void recharge(@Param("customerId") Integer customerId, @Param("amount") BigDecimal amount);
 }

@@ -27,9 +27,12 @@
           <span class="badge bg-warning text-dark me-2" title="信用等级">
                         LV.{{ user.creditLevel }} ({{ (user.discount * 10).toFixed(1) }}折)
                     </span>
-          <span class="badge bg-success me-3" title="账户余额">
-                        余额: ¥{{ user.balance.toFixed(2) }}
-                    </span>
+          <span class="badge bg-success me-2" title="账户余额">
+              余额: ¥{{ user.balance.toFixed(2) }}
+          </span>
+          <button class="btn btn-outline-warning btn-sm me-3" @click="openRechargeModal">
+            <i class="fas fa-coins"></i> 充值
+          </button>
           <button class="btn btn-outline-light btn-sm" @click="showOrderHistory">
             <i class="fas fa-history"></i> 我的订单
           </button>
@@ -151,6 +154,47 @@
     </div>
   </div>
 
+  <div class="modal fade" id="rechargeModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">账户余额充值</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">当前余额: <strong class="text-success">¥{{ user.balance.toFixed(2) }}</strong></p>
+
+          <div class="mb-3">
+            <label class="form-label">充值金额 (CNY)</label>
+            <div class="input-group">
+              <span class="input-group-text">¥</span>
+              <input type="number" class="form-control" v-model.number="rechargeAmount" min="1" placeholder="请输入金额">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">选择支付方式</label>
+            <div class="d-flex gap-2">
+              <input type="radio" class="btn-check" name="payOptions" id="payWechat" value="wechat" v-model="payMethod" autocomplete="off">
+              <label class="btn btn-outline-success flex-grow-1" for="payWechat">
+                <i class="fab fa-weixin"></i> 微信支付
+              </label>
+
+              <input type="radio" class="btn-check" name="payOptions" id="payAlipay" value="alipay" v-model="payMethod" autocomplete="off">
+              <label class="btn btn-outline-primary flex-grow-1" for="payAlipay">
+                <i class="fab fa-alipay"></i> 支付宝
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-success" @click="handleRecharge">确认支付</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="cartModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -248,7 +292,12 @@
         orderHistoryModal: null,
 
         regForm: { name: '', password: '', address: '' },//注册表单
-        registerModal: null // 注册弹窗实例
+        registerModal: null, // 注册弹窗实例
+
+        // 【新增】充值相关数据
+        rechargeModal: null,
+        rechargeAmount: 100, // 默认充100
+        payMethod: 'wechat', // 默认选中微信
       }
     },
     mounted() {
@@ -263,6 +312,9 @@
 
       // 新增：初始化注册弹窗
       this.registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+
+      // 【新增】初始化充值弹窗
+      this.rechargeModal = new bootstrap.Modal(document.getElementById('rechargeModal'));
     },
     methods: {
       // 新增：检查登录状态
@@ -332,6 +384,40 @@
           this.myOrders = [];
           alert("已安全退出");
         });
+      },
+
+      // 1. 打开充值窗口
+      openRechargeModal() {
+        this.rechargeAmount = 100; // 重置金额
+        this.rechargeModal.show();
+      },
+
+      // 2. 处理充值
+      handleRecharge() {
+        if(this.rechargeAmount <= 0) {
+          alert("请输入正确的金额！");
+          return;
+        }
+
+        // 模拟跳转支付过程 (延迟 500ms)
+        const payName = this.payMethod === 'wechat' ? '微信' : '支付宝';
+        if(confirm(`即将跳转至 ${payName} 进行支付 ¥${this.rechargeAmount}，是否继续？`)) {
+
+          // 发送请求给后端
+          axios.post(`${API_BASE}/recharge`, {
+            customerId: this.user.customerId,
+            amount: this.rechargeAmount
+          }).then(res => {
+            if (res.data.success) {
+              alert("充值成功！");
+              this.rechargeModal.hide();
+              // 刷新用户信息 (余额会变)
+              this.checkLoginStatus();
+            } else {
+              alert("充值失败: " + res.data.message);
+            }
+          });
+        }
       },
 
       // 下单

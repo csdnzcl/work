@@ -105,4 +105,25 @@ public class UserController {
     public List<Supplier> getSuppliers() {
         return supplierMapper.findAll();
     }
+
+    // 【新增】充值接口
+    @PostMapping("/recharge")
+    public Map<String, Object> recharge(@RequestBody Map<String, Object> payload) {
+        try {
+            Integer customerId = (Integer) payload.get("customerId");
+            // 前端传来的可能是 Integer 或 String，转为 BigDecimal
+            String amountStr = payload.get("amount").toString();
+            java.math.BigDecimal amount = new java.math.BigDecimal(amountStr);
+
+            if (amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                return Map.of("success", false, "message", "充值金额必须大于0");
+            }
+
+            userMapper.recharge(customerId, amount);
+            return Map.of("success", true, "message", "充值成功！余额已更新。");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("success", false, "message", "充值失败: " + e.getMessage());
+        }
+    }
 }
