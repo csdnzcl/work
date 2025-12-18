@@ -193,13 +193,13 @@
 
 <script>
   const { createApp } = Vue;
-  // 后端地址
+  // 确保 Axios 允许携带 Cookie
+  axios.defaults.withCredentials = true;
   const API_BASE = 'http://localhost:8080/api';
 
   createApp({
     data() {
       return {
-        // 用户状态 (默认空)
         user: {
           isLoggedIn: false,
           customerId: null,
@@ -210,40 +210,41 @@
         },
         loginForm: { username: '', password: '' },
         searchQuery: '',
-        books: [],      // 从后端获取
-        myOrders: [],   // 从后端获取
-
-        // 购物车相关
+        books: [],
+        myOrders: [],
         currentBook: {},
         orderQuantity: 1,
-
-        // Modals
         loginModal: null,
         cartModal: null,
         orderHistoryModal: null
       }
     },
     mounted() {
-      // 初始化 Modals
       this.loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
       this.cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
       this.orderHistoryModal = new bootstrap.Modal(document.getElementById('orderHistoryModal'));
 
-      // 页面加载即查书
+      // 1. 页面加载时，尝试自动登录 (检查 Cookie)
+      this.checkLoginStatus();
+
       this.fetchBooks();
     },
     methods: {
-      // 1. 获取图书 (API: /books)
-      fetchBooks() {
-        axios.get(`${API_BASE}/books`, { params: { keyword: this.searchQuery } })
+      // 新增：检查登录状态
+      checkLoginStatus() {
+        axios.get(`${API_BASE}/check-login`)
                 .then(res => {
-                  this.books = res.data;
-                })
-                .catch(err => console.error(err));
+                  if (res.data.success) {
+                    // 如果后端说 Cookie 有效，直接更新用户状态
+                    this.updateUserState(res.data.data);
+                    console.log("自动登录成功");
+                  } else {
+                    console.log("用户未登录");
+                  }
+                });
       },
 
-      // 2. 登录 (API: /login)
-      openLoginModal() { this.loginModal.show(); },
+      // 登录
       handleLogin() {
         axios.post(`${API_BASE}/login`, this.loginForm)
                 .then(res => {
@@ -256,14 +257,37 @@
                   }
                 });
       },
+
+      // 退出登录 (调用后端清除 Cookie)
       logout() {
-        this.user = { isLoggedIn: false, discount: 1.0 };
-        this.myOrders = [];
+        axios.post(`${API_BASE}/logout`).then(res => {
+          this.user = { isLoggedIn: false, discount: 1.0 };
+          this.myOrders = [];
+          alert("已安全退出");
+        });
+      },
+
+      // 下单
+      submitOrder() {
+        axios.post(`${API_BASE}/order/submit`, {
+          customerId: this.user.customerId,
+          isbn: this.currentBook.isbn,
+          quantity: this.orderQuantity
+        }).then(res => {
+          if (res.data.success) {
+            alert("支付成功！" + res.data.message);
+            this.cartModal.hide();
+            this.fetchBooks();
+            // 支付后刷新余额 (直接调用 checkLoginStatus 即可刷新)
+            this.checkLoginStatus();
+          } else {
+            alert("支付失败: " + res.data.message);
+          }
+        });
       },
 
       // 辅助：更新前端用户状态
       updateUserState(userData) {
-        // 根据信用等级计算折扣 (对应数据库规则)
         let disc = 0.9;
         if (userData.creditLevel === 2) disc = 0.85;
         if (userData.creditLevel === 3) disc = 0.85;
@@ -280,46 +304,25 @@
         };
       },
 
-      // 3. 下单 (API: /order/submit)
+      // 其他方法保持不变...
+      fetchBooks() {
+        axios.get(`${API_BASE}/books`, { params: { keyword: this.searchQuery } })
+                .then(res => { this.books = res.data; });
+      },
+      openLoginModal() { this.loginModal.show(); },
       addToCart(book) {
         this.currentBook = book;
         this.orderQuantity = 1;
         this.cartModal.show();
       },
-      submitOrder() {
-        axios.post(`${API_BASE}/order/submit`, {
-          customerId: this.user.customerId,
-          isbn: this.currentBook.isbn,
-          quantity: this.orderQuantity
-        }).then(res => {
-          if (res.data.success) {
-            alert("支付成功！" + res.data.message);
-            this.cartModal.hide();
-            this.fetchBooks(); // 刷新库存
-            this.refreshUserInfo(); // 刷新余额
-          } else {
-            alert("支付失败: " + res.data.message);
-          }
-        });
-      },
-
-      // 4. 刷新用户余额 (API: /user/{id})
-      refreshUserInfo() {
-        if (!this.user.isLoggedIn) return;
-        axios.get(`${API_BASE}/user/${this.user.customerId}`)
-                .then(res => this.updateUserState(res.data));
-      },
-
-      // 5. 历史订单 (API: /orders/history)
       showOrderHistory() {
         if (!this.user.isLoggedIn) return;
         axios.get(`${API_BASE}/orders/history`, { params: { customerId: this.user.customerId } })
                 .then(res => {
-                  this.myOrders = res.data; // 注意字段大小写要看后端返回
+                  this.myOrders = res.data;
                   this.orderHistoryModal.show();
                 });
       },
-
       getOrderStatusClass(status) {
         if (status === 'Paid') return 'bg-success';
         if (status === 'Pending') return 'bg-warning text-dark';

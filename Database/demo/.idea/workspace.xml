@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4150d614-84a6-4bce-ad01-5ad47b9bac69" name="更改" comment="" />
+    <list default="true" id="4150d614-84a6-4bce-ad01-5ad47b9bac69" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/323efd28-66f4-446f-8be5-f3d2d98e9efa.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/323efd28-66f4-446f-8be5-f3d2d98e9efa.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/323efd28-66f4-446f-8be5-f3d2d98e9efa/storage_v2/_src_/schema/onlinebookstore.pd6bnw.zip" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/323efd28-66f4-446f-8be5-f3d2d98e9efa/storage_v2/_src_/schema/onlinebookstore.pd6bnw.zip" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/controller/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/static/index.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,6 +24,9 @@
         <option value="HTML File" />
       </list>
     </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
@@ -44,7 +53,9 @@
     "RequestMappingsPanelWidth0": "75",
     "RequestMappingsPanelWidth1": "75",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "Spring Boot.DemoApplication (1).executor": "Run",
+    "git-widget-placeholder": "master",
     "last_opened_file_path": "D:/work/Database/demo/src/main/resources/static",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -102,6 +113,7 @@
       <workItem from="1760535103584" duration="48000" />
       <workItem from="1765886766971" duration="2083000" />
       <workItem from="1766030333758" duration="6786000" />
+      <workItem from="1766037626342" duration="1451000" />
     </task>
     <servers />
   </component>

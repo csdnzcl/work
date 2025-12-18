@@ -2,9 +2,11 @@ package com.example.controller;
 
 import com.example.mapper.CustomerMapper;
 import com.example.mapper.SupplierMapper;
-import com.example.mapper.UserMapper;
 import com.example.pojo.Customer;
 import com.example.pojo.Supplier;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,17 +22,53 @@ public class UserController {
     private CustomerMapper customerMapper;
     @Autowired
     private SupplierMapper supplierMapper;
-    @Autowired
-    private UserMapper userMapper;
+/*    @Autowired
+    private UserMapper userMapper;*/
 
-    // 1. 用户登录 (简单版)
+    // 1. 用户登录 (修改：增加 HttpServletResponse 参数用于设置 Cookie)
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody Map<String, String> form) {
-        Customer customer = userMapper.login(form.get("username"), form.get("password"));
+    public Map<String, Object> login(@RequestBody Map<String, String> payload, HttpServletResponse response) {
+        String username = payload.get("username");
+        String password = payload.get("password");
+
+        Customer customer = customerMapper.login(username, password);
+
         if (customer != null) {
+            // --- 核心修改：登录成功，创建 Cookie ---
+            Cookie cookie = new Cookie("loginUserId", String.valueOf(customer.getCustomerId()));
+            cookie.setPath("/");           // 允许所有路径访问
+            cookie.setMaxAge(7 * 24 * 3600); // 设置有效期为 7 天
+            cookie.setHttpOnly(true);      // 禁止 JS 读取，提高安全性
+            response.addCookie(cookie);    // 把 Cookie 加入响应头
+            // -------------------------------------
+
             return Map.of("success", true, "data", customer);
+        } else {
+            return Map.of("success", false, "message", "用户名或密码错误");
         }
-        return Map.of("success", false, "message", "用户名或密码错误");
+    }
+
+    // 2. 检查登录状态 (新增：用于刷新页面时自动登录)
+    @GetMapping("/check-login")
+    public Map<String, Object> checkLogin(@CookieValue(value = "loginUserId", required = false) String loginUserId) {
+        if (loginUserId != null) {
+            // 如果 Cookie 存在，直接去数据库查用户信息
+            Customer customer = customerMapper.findById(Integer.parseInt(loginUserId));
+            if (customer != null) {
+                return Map.of("success", true, "data", customer);
+            }
+        }
+        return Map.of("success", false, "message", "未登录");
+    }
+
+    // 3. 退出登录 (新增：清除 Cookie)
+    @PostMapping("/logout")
+    public Map<String, Object> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("loginUserId", null); //以此名建立一个空值cookie
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // 设置生命周期为0，即立即删除
+        response.addCookie(cookie);
+        return Map.of("success", true, "message", "退出成功");
     }
 
     // 2. 刷新用户信息 (重点！用于购买后刷新余额)

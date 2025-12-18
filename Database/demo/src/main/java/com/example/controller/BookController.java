@@ -66,10 +66,16 @@ public class BookController {
     @PostMapping("/admin/books")
     public Map<String, Object> addBook(@RequestBody Book book) {
         try {
+            // 1. 插入图书基本信息
             bookMapper.insertBook(book);
+
+            // 2. 【新增关键代码】插入供应商关联
+            // 如果前端没传 supplierId，默认关联到 ID=1 的供应商
+            bookMapper.insertBookSupplier(book.getIsbn());
+
             return Map.of("success", true, "message", "录入成功");
         } catch (Exception e) {
-            return Map.of("success", false, "message", e.getMessage());
+            return Map.of("success", false, "message", "录入失败: " + e.getMessage());
         }
     }
 
