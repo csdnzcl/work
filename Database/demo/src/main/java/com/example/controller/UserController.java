@@ -126,4 +126,11 @@ public class UserController {
             return Map.of("success", false, "message", "充值失败: " + e.getMessage());
         }
     }
+
+    // 【新增】管理员获取所有客户列表
+    @GetMapping("/admin/customers")
+    public List<Customer> getAllCustomers() {
+        // 这里可以直接调 Mapper，因为逻辑很简单
+        return customerMapper.findAll();
+    }
 }

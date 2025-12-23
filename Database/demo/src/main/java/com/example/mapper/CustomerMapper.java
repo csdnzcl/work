@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Options;
 
+import java.util.List;
+
 @Mapper
 public interface CustomerMapper {
 
@@ -21,4 +23,8 @@ public interface CustomerMapper {
     @Insert("INSERT INTO T_CUSTOMERS (Name, Password, Address, Balance, Credit_Level) VALUES (#{name}, #{password}, #{address}, 1000.00, 1)")
     @Options(useGeneratedKeys = true, keyProperty = "customerId", keyColumn = "CustomerID")
     void register(Customer customer);
+
+    // 【新增】查询所有客户列表 (供管理员使用)
+    @Select("SELECT * FROM T_CUSTOMERS ORDER BY CustomerID DESC")
+    List<Customer> findAll();
 }

@@ -7,12 +7,9 @@
     <list default="true" id="4150d614-84a6-4bce-ad01-5ad47b9bac69" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/323efd28-66f4-446f-8be5-f3d2d98e9efa.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/323efd28-66f4-446f-8be5-f3d2d98e9efa.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/mapper/BookMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/mapper/BookMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/service/BookService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/service/BookService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/controller/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/mapper/CustomerMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/mapper/CustomerMapper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/resources/static/admin_enhance.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/static/admin_enhance.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../人工智能导论/第一次作业/main.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../人工智能导论/第一次作业/十五数码问题求解算法及性能比较.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../人工智能导论/第二次作业/人工智能导论作业.md" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,8 +20,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="HTML File" />
-        <option value="Interface" />
         <option value="Class" />
+        <option value="Interface" />
       </list>
     </option>
   </component>
@@ -129,6 +126,8 @@
       <workItem from="1766045636797" duration="2028000" />
       <workItem from="1766136147367" duration="651000" />
       <workItem from="1766468400348" duration="1840000" />
+      <workItem from="1766470412960" duration="42000" />
+      <workItem from="1766486594219" duration="1029000" />
     </task>
     <servers />
   </component>
