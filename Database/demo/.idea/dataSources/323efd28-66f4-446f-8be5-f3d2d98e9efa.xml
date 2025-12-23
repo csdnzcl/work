@@ -1038,7 +1038,7 @@ sys|schema||mysql.sys|localhost|TRIGGER|G</Grants>
       <AutoIntrospectionLevel>3</AutoIntrospectionLevel>
       <Current>1</Current>
       <LastIntrospectionLevel>3</LastIntrospectionLevel>
-      <LastIntrospectionLocalTimestamp>2025-12-18.07:56:30</LastIntrospectionLocalTimestamp>
+      <LastIntrospectionLocalTimestamp>2025-12-23.05:41:44</LastIntrospectionLocalTimestamp>
       <CollationName>utf8mb4_0900_ai_ci</CollationName>
     </schema>
     <schema id="293" parent="1" name="performance_schema">
@@ -1480,7 +1480,7 @@ SupplierID</ColNames>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
     <column id="382" parent="312" name="CustomerID">
-      <AutoIncrement>1</AutoIncrement>
+      <AutoIncrement>2</AutoIncrement>
       <NotNull>1</NotNull>
       <Position>1</Position>
       <StoredType>int|0s</StoredType>
@@ -1538,7 +1538,7 @@ SupplierID</ColNames>
       <Predicate>`Quantity` &gt; 0</Predicate>
     </check>
     <column id="394" parent="313" name="DetailID">
-      <AutoIncrement>1</AutoIncrement>
+      <AutoIncrement>10</AutoIncrement>
       <NotNull>1</NotNull>
       <Position>1</Position>
       <StoredType>int|0s</StoredType>
@@ -1618,7 +1618,7 @@ SupplierID</ColNames>
       <SourceTextLength>128</SourceTextLength>
     </trigger>
     <column id="410" parent="314" name="OrderID">
-      <AutoIncrement>1</AutoIncrement>
+      <AutoIncrement>24</AutoIncrement>
       <NotNull>1</NotNull>
       <Position>1</Position>
       <StoredType>int|0s</StoredType>
@@ -1674,7 +1674,7 @@ SupplierID</ColNames>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
     <column id="421" parent="315" name="RecordID">
-      <AutoIncrement>1</AutoIncrement>
+      <AutoIncrement>8</AutoIncrement>
       <NotNull>1</NotNull>
       <Position>1</Position>
       <StoredType>int|0s</StoredType>

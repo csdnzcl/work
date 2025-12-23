@@ -61,9 +61,11 @@ public interface BookMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "AuthorID")
     void insertAuthor(Map<String, Object> params);
 
-    // 关联书和作者
-    @Insert("INSERT INTO T_BOOK_AUTHORS (ISBN, AuthorID, Author_Rank) VALUES (#{isbn}, #{authorId}, 1)")
-    void insertBookAuthor(@Param("isbn") String isbn, @Param("authorId") Integer authorId);
+    // ✅ 新代码：增加 rank 参数
+    @Insert("INSERT INTO T_BOOK_AUTHORS (ISBN, AuthorID, Author_Rank) VALUES (#{isbn}, #{authorId}, #{rank})")
+    void insertBookAuthor(@Param("isbn") String isbn,
+                          @Param("authorId") Integer authorId,
+                          @Param("rank") Integer rank);
 
     // 9. 清空库存 (将 Stock_Qty 置为 0)
     // 支持批量操作，这里为了简单演示，先做单个清空，前端循环调用即可
